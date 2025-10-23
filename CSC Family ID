@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Haryana Family ID Correction Portal</title>
+  <style>
+    body {font-family: Arial, sans-serif; margin:0; background:#f4f2ec;}
+    header {background:#7a3f00;color:#fff;padding:18px;text-align:center;}
+    nav{background:#6b2d00;padding:8px;text-align:center;}
+    nav a{color:#fff;margin:0 8px;text-decoration:none;font-weight:600;}
+    .container{max-width:900px;margin:24px auto;padding:18px;}
+    form{background:#fff;padding:18px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);}
+    label{display:block;margin-top:10px;font-weight:600}
+    input,select,textarea{width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
+    button{margin-top:12px;padding:10px 16px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer}
+    button.secondary{background:#b71c1c}
+    .msg{margin-top:12px;padding:10px;border-radius:6px}
+    .success{background:#e8f5e9;border:1px solid #c8e6c9}
+    .requests{margin-top:20px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Haryana Family ID Correction Portal</h1>
+    <div style="font-size:14px;margin-top:6px">Family ID corrections - name, income, occupation, address, category etc.</div>
+  </header>
+  <nav>
+    <a href="#home">Home</a>
+    <a href="#form">Submit Request</a>
+    <a href="admin.html">Admin Login</a>
+  </nav>
+
+  <div class="container" id="home">
+    <h2>Submit Correction Request</h2>
+    <form id="correctionForm">
+      <label>Family ID (Parivar Pehchan Patra)</label>
+      <input name="familyId" id="familyId" required placeholder="e.g. HRY-123456">
+
+      <label>Full Name</label>
+      <input name="fullname" id="fullname" required>
+
+      <label>Father's Name</label>
+      <input name="fathername" id="fathername">
+
+      <label>Mother's Name</label>
+      <input name="mothername" id="mothername">
+
+      <label>Type of Correction</label>
+      <select name="correctionType" id="correctionType" required>
+        <option value="">--Select--</option>
+        <option>Name Correction</option>
+        <option>Father Name Correction</option>
+        <option>Mother Name Correction</option>
+        <option>Income Update</option>
+        <option>Occupation Change</option>
+        <option>Address Change</option>
+        <option>Category Change</option>
+        <option>Other</option>
+      </select>
+
+      <label>Details / Explanation</label>
+      <textarea id="details" rows="4" placeholder="Describe the correction required..."></textarea>
+
+      <label>Contact Mobile / Email</label>
+      <input name="contact" id="contact" placeholder="Mobile or Email">
+
+      <button type="submit">Submit Request</button>
+    </form>
+
+    <div id="output" class="msg" style="display:none"></div>
+
+    <div class="requests" id="requestsList" style="display:none">
+      <h3>Your Submitted Requests (saved in this browser)</h3>
+      <div id="list"></div>
+      <button onclick="clearLocal()">Clear Local Requests</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const form = document.getElementById('correctionForm');
+  const output = document.getElementById('output');
+  const requestsList = document.getElementById('requestsList');
+  const list = document.getElementById('list');
+
+  function loadList(){
+    const arr = JSON.parse(localStorage.getItem('hry_requests')||'[]');
+    if(arr.length === 0){ requestsList.style.display='none'; return; }
+    requestsList.style.display='block';
+    list.innerHTML = arr.map(r=>{
+      return `<div style="padding:10px;border:1px solid #eee;margin-bottom:8px;border-radius:6px">
+        <b>ID:</b> ${r.reqId} &nbsp; <b>Status:</b> ${r.status} <br>
+        <b>FamilyID:</b> ${r.familyId} &nbsp; <b>Name:</b> ${r.fullname} <br>
+        <small>${new Date(r.date).toLocaleString()}</small>
+      </div>`;
+    }).join('');
+  }
+
+  function genId(){ return 'REQ-'+Date.now().toString().slice(-8); }
+
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const data = {
+      reqId: genId(),
+      familyId: form.familyId.value.trim(),
+      fullname: form.fullname.value.trim(),
+      fathername: form.fathername.value.trim(),
+      mothername: form.mothername.value.trim(),
+      correctionType: form.correctionType.value,
+      details: document.getElementById('details').value.trim(),
+      contact: form.contact.value.trim(),
+      status: 'Pending',
+      date: new Date().toISOString()
+    };
+    const arr = JSON.parse(localStorage.getItem('hry_requests')||'[]');
+    arr.unshift(data);
+    localStorage.setItem('hry_requests', JSON.stringify(arr));
+    output.style.display='block';
+    output.className='msg success';
+    output.innerHTML = `<strong>Submitted!</strong> Request ID: <b>${data.reqId}</b>. Use this ID for tracking.`;
+    form.reset();
+    loadList();
+  });
+
+  window.clearLocal = ()=>{
+    if(confirm('Clear all local requests?')){ localStorage.removeItem('hry_requests'); loadList(); output.style.display='none'; }
+  }
+
+  loadList();
+})();
+</script>
+</body>
+</html>
